@@ -1,0 +1,1 @@
+# ZyDrop-quickshare-qr
