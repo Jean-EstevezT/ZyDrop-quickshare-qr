@@ -113,7 +113,7 @@ class App:
             else:
                 sys.exit(1)
 
-        # File vs. Folder Logic
+        # File and Folder Logic
         if os.path.isfile(target_path):
             self.serve_dir = os.path.dirname(target_path)
             filename = os.path.basename(target_path)
