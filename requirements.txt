@@ -1,3 +1,4 @@
 qrcode
 Pillow
 cryptography
+customtkinter
