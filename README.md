@@ -1,89 +1,103 @@
-# ZyDrop-quickshare-qr - Secure LAN File Sharing
+# ⚡ ZyDrop (QuickSecure Share)
 
-ZyDrop is a simple script and secure application for sharing files, folders, and clipboard content across your local network. It generates a unique QR code and a secure link, allowing you to instantly transfer data to any device with a camera or web browser on the same network.
+**ZyDrop** is a modern, ultra-secure LAN file sharing tool designed to make transferring files, folders, and clipboard content between devices as easy as scanning a QR code.
 
-## Features
+Built with **Python**, it runs a local HTTPS server protected by dynamic token authentication, ensuring your data is encrypted and safe even on public Wi-Fi networks.
 
-*   **Share Anything:** Transfer individual files, entire folders, or text and images from your clipboard.
-*   **Secure by Default:** Each sharing session is protected by a randomly generated, single-use security token.
-*   **Simple Discovery:** A QR code makes it incredibly easy to access shared files from a mobile device.
-*   **Cross-Platform:** Works on both Windows and Linux.
-*   **GUI and Context Menu Integration:** Use the user-friendly interface or right-click any file/folder to share it instantly.
-*   **Lightweight:** No complex setup or heavy dependencies.
+---
 
-## How It Works
+## ✨ Features
 
-ZyDrop starts a temporary, local HTTP server on your machine. It automatically detects your LAN IP address and assigns a random, available port. Access to the shared files is protected by a security token embedded in the generated URL. When you stop the application, the server shuts down, and all temporary files are cleaned up.
+- **🔒 Maximum Security (HTTPS + Token)**
+  - Uses **SSL/HTTPS** encryption (self-signed) to prevent data eavesdropping.
+  - Generates a **random access token** for every session.
+  - Token rotates automatically with every new share.
 
-## Requirements
+- **📤 Universal Sharing**
+  - **Files:** Share individual files of any size.
+  - **Folders:** Automatically zips folders on-the-fly for single-click downloads.
+  - **Clipboard:** Share text or images directly from your clipboard.
 
-To run ZyDrop, you need Python 3 and the following libraries:
+- **📥 Receive Mode**
+  - Allow others to upload files *to* your computer via a secure web page.
 
-*   `qrcode`
-*   `Pillow`
+- **🎨 Modern UI**
+  - sleek, dark/light mode interface built with `CustomTkinter`.
 
-You can install them using pip:
+- **🖱️ OS Integration**
+  - Right-click Context Menu support for **Windows** and **Linux**.
+  - "Share with ZyDrop" straight from your file explorer.
+
+---
+
+## 🚀 Installation & Setup
+
+### 1. Requirements
+- Python 3.10+
+- Dependencies: `customtkinter`, `cryptography`, `qrcode`, `Pillow`
+
+### 2. Quick Start
+Clone the repo and install dependencies:
 
 ```bash
+git clone https://github.com/Jean-EstevezT/ZyDrop-quickshare-qr.git
+cd ZyDrop-quickshare-qr
+
+# Create virtual environment (optional but recommended)
+python -m venv .venv
+# Activate it:
+# Windows: .venv\Scripts\activate
+# Linux/Mac: source .venv/bin/activate
+
+# Install requirements
 pip install -r requirements.txt
 ```
 
-## Installation
+### 3. Run the App
+Can be run in two modes:
 
-An installation script is provided to integrate ZyDrop with your operating system's context menu, making it easier to use.
+- **Modern Mode (Recommended):**
+  ```bash
+  python modern_script.py
+  ```
+- **Classic/Legacy Mode:**
+  ```bash
+  python script.pyw
+  ```
 
-1.  **Install Dependencies:**
-    
-    ```bash
-    pip install -r requirements.txt
-    ```
-    
-2.  **Run the Installer:**
-    
-    Open a terminal or command prompt in the ZyDrop directory and run:
-    
-    ```bash
-    python install_script.py
-    ```
-    
-    The script will present you with two options:
-    
-    *   **Install:** This will add a "Share with ZyDrop (QR)" option to your right-click context menu.
-        *   **On Windows:** This requires administrator privileges to modify the Windows Registry. The script will automatically request these permissions.
-        *   **On Linux:** This will create a `.desktop` file in `~/.local/share/applications/`, integrating ZyDrop with your file manager.
-    *   **Uninstall:** This will safely remove the context menu integration.
+---
 
-## Usage
+## 🔧 Context Menu Integration (Right-Click)
 
-There are two ways to use ZyDrop:
+Make ZyDrop a part of your OS for instant access.
 
-1.  **From the Context Menu (Recommended):**
-    
-    *   Right-click on any file or folder.
-    *   Select "Share with ZyDrop (QR)" from the menu.
-    *   The ZyDrop window will appear with a QR code.
-    *   Scan the QR code with another device on the same network to download the file/folder.
-2.  **Standalone Application:**
-    
-    *   Run the `script.pyw` file directly.
-    *   A window will appear, allowing you to choose to share a file, a folder, or the content of your clipboard.
-    *   After your selection, the QR code window will be displayed.
+**Run the installer:**
+```bash
+python install_script.py
+```
 
-To stop sharing, simply close the QR code window or click the "Stop and Exit" button.
+- Select **Option 1 (Install)**.
+- **Windows:** Grants "Share with ZyDrop" in right-click menu (Requires Admin).
+- **Linux:** Adds a Desktop Entry for "Open with..." integration.
 
-## Uninstallation
+*(To remove, simply run the script again and select Uninstall)*
 
-To remove the context menu entries created during installation:
+---
 
-1.  Run the installation script again:
-    
-    ```bash
-    python install_script.py
-    ```
-    
-2.  Select the "Uninstall" option.
-    
-    *   **On Windows:** This requires administrator privileges to remove the registry entries.
-    *   **On Linux:** This will remove the `.desktop` file.
+## 📱 How to Use
 
-This will not delete the application files, only the OS integration.
+1. **Select what to share:** File, Folder, Clipboard, or Activate Receive Mode.
+2. **Scan the QR Code:** Use your phone camera or visit the link on another PC.
+3. **Accept validity warning:** Since we use a self-signed secure certificate to protect your data without internet, browsers will warn you.
+   - Click **"Advanced"** -> **"Proceed to (unsafe)"**.
+   - Your connection **IS encrypted** and safe from local sniffers.
+4. **Download/Upload:** Transfer your files instantly.
+5. **Stop:** Closing the app kills the server and cleans up all temporary files immediately.
+
+---
+
+## 🛠️ Technologies
+- **Python 3**
+- **CustomTkinter** (UI)
+- **Cryptography** (SSL/TLS Generation)
+- **HTTPS.server** (Core implementation)
