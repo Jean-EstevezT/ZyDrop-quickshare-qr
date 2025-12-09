@@ -199,11 +199,11 @@ class ServerThread(threading.Thread):
 
     def run(self):
         os.chdir(self.directory)
-        self.cert_file, self.key_file, self.ssl_dir = generate_cert()
-        self.server = ThreadingHTTPServer((self.ip, 0), SecureHandler)
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
-        self.server.socket = context.wrap_socket(self.server.socket, server_side=True)
+        # self.cert_file, self.key_file, self.ssl_dir = generate_cert() # SSL Disabled
+        self.server = ThreadingHTTPServer(('0.0.0.0', 0), SecureHandler)
+        # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        # context.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
+        # self.server.socket = context.wrap_socket(self.server.socket, server_side=True)
         self.port = self.server.server_port
         self.server.serve_forever()
 
@@ -212,11 +212,11 @@ class ServerThread(threading.Thread):
             self.server.shutdown()
             self.server.server_close()
         
-        if hasattr(self, 'ssl_dir') and self.ssl_dir:
-             try:
-                shutil.rmtree(self.ssl_dir)
-             except:
-                pass
+        # if hasattr(self, 'ssl_dir') and self.ssl_dir:
+        #      try:
+        #         shutil.rmtree(self.ssl_dir)
+        #      except:
+        #         pass
 
 class App:
     def __init__(self, target_path):
@@ -281,11 +281,21 @@ class App:
         self.server_thread = ServerThread(self.serve_dir)
         self.server_thread.start()
         
-        while self.server_thread.port == 0:
-            pass
+        self.check_server_ready(url_path, display_text, current_token)
 
-        full_url = f"https://{self.server_thread.ip}:{self.server_thread.port}{url_path}?key={current_token}"
+    def check_server_ready(self, url_path, display_text, current_token):
+        if self.server_thread.port == 0:
+            self.root.after(100, lambda: self.check_server_ready(url_path, display_text, current_token))
+            return
 
+        if hasattr(self, 'loading_label') and self.loading_label:
+            self.loading_label.destroy()
+
+        # Build HTTP URL
+        full_url = f"http://{self.server_thread.ip}:{self.server_thread.port}{url_path}?key={current_token}"
+        self.build_sharing_ui(full_url, display_text)
+
+    def build_sharing_ui(self, full_url, display_text):
         # --- Modern UI ---
         main_frame = ctk.CTkFrame(self.root, fg_color="transparent")
         main_frame.pack(expand=True, fill="both", padx=20, pady=20)
@@ -296,18 +306,20 @@ class App:
         ctk.CTkLabel(main_frame, text="Scan to Download", font=("Helvetica", 18, "bold")).pack(pady=(20, 5))
         ctk.CTkLabel(main_frame, text=display_text, font=("Consolas", 12), text_color="gray").pack(pady=(0, 20))
 
-        qr = qrcode.QRCode(box_size=8, border=2)
+        qr = qrcode.QRCode(box_size=10, border=2)
         qr.add_data(full_url)
         qr.make(fit=True)
         # Using white/black strictly for QR readability even in dark mode
         qr_img = qr.make_image(fill_color="black", back_color="white")
-        self.photo = ImageTk.PhotoImage(qr_img)
+        
+        # CTkImage for High DPI scaling
+        self.qr_photo = ctk.CTkImage(light_image=qr_img.get_image(), dark_image=qr_img.get_image(), size=(250, 250))
         
         # QR Display
-        qr_label = tk.Label(main_frame, image=self.photo, bd=2, relief="solid")
+        qr_label = ctk.CTkLabel(main_frame, image=self.qr_photo, text="")
         qr_label.pack(pady=10)
 
-        ctk.CTkLabel(main_frame, text="🔒 Secure Connection (HTTPS)", font=("Arial", 12), text_color="green").pack(pady=5)
+        ctk.CTkLabel(main_frame, text="Network Connection (HTTP)", font=("Arial", 12), text_color="blue").pack(pady=5)
         
         ctk.CTkButton(main_frame, text="Copy Link", command=lambda: self.copy_to_clipboard(full_url)).pack(fill="x", pady=10)
         ctk.CTkButton(main_frame, text="Stop Server", command=self.on_close, fg_color="red", hover_color="#cc0000").pack(fill="x", pady=5)

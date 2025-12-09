@@ -205,19 +205,12 @@ class ServerThread(threading.Thread):
         self.daemon = True # The thread dies if the main program dies
 
     def run(self):
-        # Change to the directory we want to serve
         os.chdir(self.directory)
-        
-        self.cert_file, self.key_file, self.ssl_dir = generate_cert()
-
-        # Port 0 allows the OS to assign a free port automatically
-        self.server = ThreadingHTTPServer((self.ip, 0), SecureHandler)
-        
-        # Wrap the socket with SSL
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
-        self.server.socket = context.wrap_socket(self.server.socket, server_side=True)
-        
+        # self.cert_file, self.key_file, self.ssl_dir = generate_cert() # SSL Disabled
+        self.server = ThreadingHTTPServer(('0.0.0.0', 0), SecureHandler)
+        # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        # context.load_cert_chain(certfile=self.cert_file, keyfile=self.key_file)
+        # self.server.socket = context.wrap_socket(self.server.socket, server_side=True)
         self.port = self.server.server_port
         self.server.serve_forever()
 
@@ -226,12 +219,11 @@ class ServerThread(threading.Thread):
             self.server.shutdown()
             self.server.server_close()
         
-        # Cleanup SSL temp files
-        if hasattr(self, 'ssl_dir') and self.ssl_dir:
-             try:
-                shutil.rmtree(self.ssl_dir)
-             except:
-                pass
+        # if hasattr(self, 'ssl_dir') and self.ssl_dir:
+        #      try:
+        #         shutil.rmtree(self.ssl_dir)
+        #      except:
+        #         pass
 
 class App:
     def __init__(self, target_path):
@@ -318,13 +310,18 @@ class App:
         self.server_thread = ServerThread(self.serve_dir)
         self.server_thread.start()
         
-        # Wait a moment for the port to be assigned
-        while self.server_thread.port == 0:
-            pass
+        self.check_server_ready(url_path, display_text, current_token)
 
-        # Build Secure URL (HTTPS)
-        full_url = f"https://{self.server_thread.ip}:{self.server_thread.port}{url_path}?key={current_token}"
+    def check_server_ready(self, url_path, display_text, current_token):
+        if self.server_thread.port == 0:
+            self.root.after(100, lambda: self.check_server_ready(url_path, display_text, current_token))
+            return
 
+        # Build HTTP URL
+        full_url = f"http://{self.server_thread.ip}:{self.server_thread.port}{url_path}?key={current_token}"
+        self.build_sharing_ui(full_url, display_text)
+
+    def build_sharing_ui(self, full_url, display_text):
         # --- UI ---
         # main
         main_frame = tk.Frame(self.root, bg="#f0f0f0", padx=20, pady=20)
@@ -339,17 +336,18 @@ class App:
         tk.Label(main_frame, text=display_text, font=("Consolas", 9), bg="#f0f0f0", fg="#555").pack(pady=(0, 15))
 
         # QR Code
-        qr = qrcode.QRCode(box_size=8, border=2)
+        qr = qrcode.QRCode(box_size=10, border=2) # Increased size
         qr.add_data(full_url)
         qr.make(fit=True)
         qr_img = qr.make_image(fill_color="black", back_color="white")
+        # Resize manually if needed to ensure large enough but for standard TK, box_size=10 usually yields a big enough image.
         self.photo = ImageTk.PhotoImage(qr_img)
         
         qr_label = tk.Label(main_frame, image=self.photo, bd=2, relief="solid")
         qr_label.pack(pady=10)
 
         # Security Info
-        tk.Label(main_frame, text="🔒 Secure Connection (Token Active)", font=("Arial", 8), fg="green", bg="#f0f0f0").pack(pady=5)
+        tk.Label(main_frame, text="Network Connection (HTTP)", font=("Arial", 8), fg="blue", bg="#f0f0f0").pack(pady=5)
         
         # Copy URL Button
         btn_copy = tk.Button(main_frame, text="Copy URL to Clipboard", command=lambda: self.copy_to_clipboard(full_url), bg="#e1e1e1")
